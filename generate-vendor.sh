@@ -53,6 +53,15 @@ cleanup () {
     [ "$OPT_INSPECT" = true ] || rm -rf "$TMP_DIR"
 }
 
+extract_file () {
+    local readonly file="$1"
+    local readonly dest="$2"
+
+    mkdir -p "$(dirname "$dest")"
+    cp "$file" "$dest"
+
+}
+
 extract_bytecode () {
     local readonly bytecode="$1"
     local readonly dest="$2"
@@ -60,12 +69,10 @@ extract_bytecode () {
     if bytecode_is_optimized "$bytecode" ; then
         iecho "  de-optimizing $dest..."
         PATH="${SCRIPT_DIR}/deps/jar:${PATH}" bytecode_deodex \
-            "$bytecode" "$dest" \
-            "${IMAGE_DIR}/system/framework/arm/boot.oat"
+            "$bytecode" "$dest" "${IMAGE_DIR}/system/framework/arm/boot.oat"
     else
         # just mirror the un-optimized apk over exactly
-        mkdir -p "$(dirname "$dest")"
-        cp "$bytecode" "$dest"
+        extract_file "$bytecode" "$dest"
     fi
 }
 
@@ -124,16 +131,12 @@ mk_init "$VENDOR_DIR"
 iecho "extracting vendor files from image..."
 for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
     image_blob="${IMAGE_DIR}/${blob}"
-
     [ -f "$image_blob" ] ||  {
         wecho "  missing file from image: $blob"
         continue
     }
 
-    blob_dirname="$(dirname $blob)"
-    blob_basename="$(basename $blob)"
     blob_extension="${blob##*.}"
-
     case "$blob_extension" in
         apk)
             extract_bytecode "$image_blob" "$blob"
@@ -144,9 +147,7 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
             mk_add_jar "$blob" "$VENDOR" "$OPT_DEVICE"
             ;;
         *)
-            mkdir -p "$blob_dirname"
-            cp "$image_blob" "$blob"
-
+            extract_file "$image_blob" "$blob"
             mk_mirror_file "$blob" "$VENDOR"
             ;;
     esac
