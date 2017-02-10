@@ -1,10 +1,25 @@
 #!/bin/bash
+#
+# Copyright 2017 Preetam J. D'Souza
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 set -e
 set -u
 
 source bytecode.sh
-source android-mk.sh
+source mk.sh
 source log.sh
 
 readonly SCRIPT_NAME="$(basename "$0")"
@@ -12,10 +27,8 @@ readonly SCRIPT_DIR="$(readlink -f $(dirname "$0"))"
 
 # included dependencies
 readonly SIMG2IMG="${SCRIPT_DIR}/deps/bin/simg2img"
-readonly BAKSMALI="${SCRIPT_DIR}/deps/jar/baksmali"
-readonly SMALI="${SCRIPT_DIR}/deps/jar/smali"
 
-# some useful paths -- all relative to WORKDIR
+# some useful paths -- all relative to $WORKDIR
 readonly TMP_DIR="tmp"
 readonly IMAGE_DIR="${TMP_DIR}/factory"
 readonly SMALI_TMP_DIR="${TMP_DIR}/smali"
@@ -23,6 +36,7 @@ readonly VENDOR_MK="device-vendor.mk"
 readonly BLOBS_MK="device-partial.mk"
 readonly MODULES_MK="Android.mk"
 
+# globals
 VENDOR=""
 BLOBS=""
 VENDOR_DIR=""
@@ -36,7 +50,7 @@ OPT_INSPECT=false
 
 help () {
     cat <<EOF
-generate vendor makefiles and extract blobs from a factory image
+Extract vendor files from a factory image and generate vendor makefiles for AOSP.
 
 usage: $SCRIPT_NAME [OPTIONS] -d [DEVICE] -i [IMAGE ZIP]
 
@@ -111,7 +125,6 @@ pushd "$WORKDIR" &>/dev/null
 
 trap cleanup EXIT
 
-
 iecho "preparing factory image..."
 mkdir -p "$IMAGE_DIR"
 unzip -j "$OPT_IMAGE" -d "$IMAGE_DIR" >/dev/null
@@ -123,10 +136,8 @@ wecho "  requesting sudo for loop mount..."
 sudo mount -o loop system-raw.img system
 popd &>/dev/null
 
-
 iecho "generating vendor makefiles..."
 mk_init "$VENDOR_DIR"
-
 
 iecho "extracting vendor files from image..."
 for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
@@ -152,6 +163,5 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
             ;;
     esac
 done
-
 
 iecho "all tasks completed successfully"
