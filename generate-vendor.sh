@@ -53,6 +53,22 @@ cleanup () {
     [ "$OPT_INSPECT" = true ] || rm -rf "$TMP_DIR"
 }
 
+extract_bytecode () {
+    local readonly bytecode="$1"
+    local readonly dest="$2"
+
+    if bytecode_is_optimized "$bytecode" ; then
+        iecho "  de-optimizing $dest..."
+        PATH="${SCRIPT_DIR}/deps/jar:${PATH}" bytecode_deodex \
+            "$bytecode" "$dest" \
+            "${IMAGE_DIR}/system/framework/arm/boot.oat"
+    else
+        # just mirror the un-optimized apk over exactly
+        mkdir -p "$(dirname "$dest")"
+        cp "$bytecode" "$dest"
+    fi
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -d|--device) OPT_DEVICE="$2"; shift 2 ;;
@@ -81,6 +97,7 @@ VENDOR_DIR="vendor/${VENDOR}/${OPT_DEVICE}"
 BLOBS="${SCRIPT_DIR}/${VENDOR}/${OPT_DEVICE}/proprietary-blobs.txt"
 WORKDIR="${OPT_OUT}/${VENDOR_DIR}"
 
+
 iecho "setting up output dir '$WORKDIR'..."
 mkdir -p "$WORKDIR"
 pushd "$WORKDIR" &>/dev/null
@@ -104,10 +121,12 @@ iecho "generating vendor makefiles..."
 mk_init "$VENDOR_DIR"
 
 
-iecho "extracting blobs..."
+iecho "extracting vendor files from image..."
 for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
-    [ -f "${IMAGE_DIR}/${blob}" ] ||  {
-        wecho "  missing blob from factory image: $blob"
+    image_blob="${IMAGE_DIR}/${blob}"
+
+    [ -f "$image_blob" ] ||  {
+        wecho "  missing file from image: $blob"
         continue
     }
 
@@ -115,28 +134,22 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
     blob_basename="$(basename $blob)"
     blob_extension="${blob##*.}"
 
-    if [ "$blob_extension" = apk ] || [ "$blob_extension" = jar ]; then
-        if bytecode_is_optimized "${IMAGE_DIR}/$blob" ; then
-            iecho "  de-optimizing $blob..."
-            PATH="${SCRIPT_DIR}/deps/jar:${PATH}" bytecode_deodex "${IMAGE_DIR}/${blob}" "$blob" "${IMAGE_DIR}/system/framework/arm/boot.oat"
-        else
-            # just mirror the un-optimized apk over exactly
-            mkdir -p "$blob_dirname"
-            cp "${IMAGE_DIR}/${blob}" "$blob"
-        fi
-
-        if [ "$blob_extension" = apk ] ; then
+    case "$blob_extension" in
+        apk)
+            extract_bytecode "$image_blob" "$blob"
             mk_add_apk "$blob" "$VENDOR" "$OPT_DEVICE"
-        elif [ "$blob_extension" = jar ] ; then
+            ;;
+        jar)
+            extract_bytecode "$image_blob" "$blob"
             mk_add_jar "$blob" "$VENDOR" "$OPT_DEVICE"
-        fi
-    else
-        # mirror blobs to vendor directory
-        mkdir -p "$blob_dirname"
-        cp "${IMAGE_DIR}/${blob}" "$blob"
+            ;;
+        *)
+            mkdir -p "$blob_dirname"
+            cp "$image_blob" "$blob"
 
-        mk_mirror_file "$blob" "$VENDOR"
-    fi
+            mk_mirror_file "$blob" "$VENDOR"
+            ;;
+    esac
 done
 
 
