@@ -137,27 +137,11 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
             cp "${IMAGE_DIR}/${blob}" "$blob"
         fi
 
-        blob_module="${blob_basename%.*}"
-
         if [ "$blob_extension" = apk ] ; then
             mk_add_apk "$blob" "$VENDOR" "$OPT_DEVICE"
         elif [ "$blob_extension" = jar ] ; then
-            {
-                echo
-                echo "ifeq (\$(TARGET_DEVICE),$OPT_DEVICE)"
-                echo "include \$(CLEAR_VARS)"
-                echo "LOCAL_MODULE := $blob_module"
-                echo "LOCAL_MODULE_TAGS := optional"
-                echo "LOCAL_MODULE_OWNER := $VENDOR"
-                echo "LOCAL_MODULE_CLASS := JAVA_LIBRARIES"
-                echo "LOCAL_SRC_FILES := ${blob}"
-                echo "LOCAL_MODULE_SUFFIX := \$(COMMON_JAVA_PACKAGE_SUFFIX)"
-                echo "include \$(BUILD_PREBUILT)"
-                echo "endif"
-            } >> "$MODULES_MK"
+            mk_add_jar "$blob" "$VENDOR" "$OPT_DEVICE"
         fi
-
-        echo "    $blob_module \\" >> "$VENDOR_MK"
     else
         # mirror blobs to vendor directory
         mkdir -p "$blob_dirname"
