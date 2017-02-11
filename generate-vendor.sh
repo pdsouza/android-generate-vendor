@@ -83,7 +83,7 @@ extract_bytecode () {
     if bytecode_is_optimized "$bytecode" ; then
         iecho "  de-optimizing $dest..."
         PATH="${SCRIPT_DIR}/deps/jar:${PATH}" bytecode_deodex \
-            "$bytecode" "$dest" "${IMAGE_DIR}/system/framework/arm/boot.oat"
+            "$bytecode" "$dest" "${IMAGE_DIR}/system/framework/arm/boot.oat" "${TMP_DIR}/smali"
     else
         # just mirror the un-optimized apk over exactly
         extract_file "$bytecode" "$dest"
