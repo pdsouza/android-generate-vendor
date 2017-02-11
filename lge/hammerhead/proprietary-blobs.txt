@@ -1,9 +1,13 @@
 # -----------------------------------------------------------------------------
-# Apps
+# Bytecode
 
+# apps
 system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk
 system/app/shutdownlistener/shutdownlistener.apk
 system/app/TimeService/TimeService.apk
+
+# libs
+system/framework/qcrilhook.jar
 
 # -----------------------------------------------------------------------------
 # Blobs - mostly based on device/lge/hammerhead/proprietary-blobs.txt
@@ -41,7 +45,6 @@ system/etc/permissions/qcrilhook.xml
 system/etc/qcril.db
 system/etc/sensor_def_hh.conf
 system/etc/acdbdata/MTP/MTP_Speaker_cal.acdb
-system/framework/qcrilhook.jar
 system/lib/hw/flp.msm8974.so
 system/lib/hw/gps.msm8974.so
 system/lib/libadsprpc.so
