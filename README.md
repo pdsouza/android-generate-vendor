@@ -39,6 +39,7 @@ These are included under [deps](deps) for your convenience.
 ## Examples
 
 Generating a vendor tree for hammerhead build M4B30Z:
+
 ```
 $ ./generate-vendor.sh -d hammerhead -i hammerhead-m4b30z-factory-625c027b.zip
 I: setting up output dir './vendor/lge/hammerhead'...
@@ -50,17 +51,20 @@ I:   de-optimizing system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk...
 I:   de-optimizing system/app/shutdownlistener/shutdownlistener.apk...
 I:   de-optimizing system/app/TimeService/TimeService.apk...
 I:   de-optimizing system/framework/qcrilhook.jar...
+I: calculating checksums...
 I: all tasks completed successfully
 I: cleaning up...
 ```
 
 ...you will end up with a clean vendor tree for your device:
+
 ```
-$ tree -L 2 vendor/lge/hammerhead/
-vendor/lge/hammerhead/
+$ tree -L 2 vendor/lge/hammerhead
+vendor/lge/hammerhead
 |-- Android.mk
 |-- device-partial.mk
 |-- device-vendor.mk
+|-- sha1sums.txt
 `-- system
     |-- app
     |-- bin
@@ -69,7 +73,7 @@ vendor/lge/hammerhead/
     |-- lib
     `-- vendor
 
-7 directories, 3 files
+7 directories, 4 files
 ```
 
 Just copy the vendor directory to your AOSP workspace and you're good to go!

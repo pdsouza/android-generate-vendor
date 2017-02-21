@@ -35,6 +35,7 @@ readonly SMALI_TMP_DIR="${TMP_DIR}/smali"
 readonly VENDOR_MK="device-vendor.mk"
 readonly BLOBS_MK="device-partial.mk"
 readonly MODULES_MK="Android.mk"
+readonly CHECKSUMS="sha1sums.txt"
 
 # globals
 VENDOR=""
@@ -73,7 +74,6 @@ extract_file () {
 
     mkdir -p "$(dirname "$dest")"
     cp "$file" "$dest"
-
 }
 
 extract_bytecode () {
@@ -163,5 +163,11 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
             ;;
     esac
 done
+
+iecho "calculating checksums..."
+{
+    echo "# $(basename "$OPT_IMAGE")"
+    find -xdev ! -path "./$TMP_DIR*" ! -path "./$CHECKSUMS" -type f | sort | xargs sha1sum
+} > "$CHECKSUMS"
 
 iecho "all tasks completed successfully"
