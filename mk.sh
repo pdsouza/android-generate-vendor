@@ -125,6 +125,20 @@ mk_add_jar () {
     _mk_add_module_depends "$jar_module"
 }
 
+mk_add_custom_module () {
+    local readonly mk="$1"
+
+    local readonly mk_basename="$(basename "$mk")"
+    local readonly module="${mk_basename%.*}"
+
+    [ -f "$_MODULES_MK" ] || _mk_init_module_mk
+
+    # strip comments and append to modules makefile
+    grep -v "#" < "$mk" >> "$_MODULES_MK"
+
+    _mk_add_module_depends "$module"
+}
+
 mk_mirror_file () {
     local readonly file="$1"
     local readonly owner="$2"

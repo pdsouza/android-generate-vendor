@@ -41,6 +41,7 @@ readonly CHECKSUMS="sha1sums.txt"
 VENDOR=""
 BLOBS=""
 VENDOR_DIR=""
+DEVICE_DIR=""
 WORKDIR=""
 
 # user options
@@ -90,6 +91,28 @@ extract_bytecode () {
     fi
 }
 
+extract_blob () {
+    local readonly blob="$1"
+    local readonly dest="$2"
+
+    local readonly blob_extension="${blob##*.}"
+
+    case "$blob_extension" in
+        apk)
+            extract_bytecode "$blob" "$dest"
+            mk_add_apk "$dest" "$VENDOR" "$OPT_DEVICE"
+            ;;
+        jar)
+            extract_bytecode "$blob" "$dest"
+            mk_add_jar "$dest" "$VENDOR" "$OPT_DEVICE"
+            ;;
+        *)
+            extract_file "$blob" "$dest"
+            mk_mirror_file "$dest" "$VENDOR"
+            ;;
+    esac
+}
+
 while [ $# -gt 0 ]; do
     case "$1" in
         -d|--device) OPT_DEVICE="$2"; shift 2 ;;
@@ -115,7 +138,8 @@ if [ ! -f "$OPT_IMAGE" ] ; then
 fi
 
 VENDOR_DIR="vendor/${VENDOR}/${OPT_DEVICE}"
-BLOBS="${SCRIPT_DIR}/${VENDOR}/${OPT_DEVICE}/proprietary-blobs.txt"
+DEVICE_DIR="${SCRIPT_DIR}/${VENDOR}/${OPT_DEVICE}"
+BLOBS="${DEVICE_DIR}/proprietary-blobs.txt"
 WORKDIR="${OPT_OUT}/${VENDOR_DIR}"
 
 
@@ -147,21 +171,18 @@ for blob in $(grep -v "#" < "$BLOBS") ; do # skips empty lines
         continue
     }
 
-    blob_extension="${blob##*.}"
-    case "$blob_extension" in
-        apk)
-            extract_bytecode "$image_blob" "$blob"
-            mk_add_apk "$blob" "$VENDOR" "$OPT_DEVICE"
-            ;;
-        jar)
-            extract_bytecode "$image_blob" "$blob"
-            mk_add_jar "$blob" "$VENDOR" "$OPT_DEVICE"
-            ;;
-        *)
-            extract_file "$image_blob" "$blob"
-            mk_mirror_file "$blob" "$VENDOR"
-            ;;
-    esac
+    extract_blob "$image_blob" "$blob"
+done
+
+custom_modules=$(find "$DEVICE_DIR" -type f -name "*.mk")
+for module in $custom_modules ; do
+    blob="$(grep LOCAL_SRC_FILES "$module" | cut -d ' ' -f 3)"
+    image_blob="${IMAGE_DIR}/${blob}"
+
+    iecho "  extracting custom module $blob..."
+
+    extract_file "$image_blob" "$blob"
+    mk_add_custom_module "$module"
 done
 
 iecho "calculating checksums..."
