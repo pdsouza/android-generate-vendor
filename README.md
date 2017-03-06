@@ -28,6 +28,7 @@ with vendor partitions for the latest Nexus devices.
 ## Supported Devices
 
 * [Nexus 5 (hammerhead)](lge/hammerhead/proprietary-blobs.txt)
+* [Nexus 7 2013 Wi-Fi (flo)](asus/flo/proprietary-blobs.txt)
 
 ## Dependencies
 
