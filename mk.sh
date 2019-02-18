@@ -61,6 +61,12 @@ _mk_add_module_depends () {
     echo "    $module \\" >> "$_VENDOR_MK"
 }
 
+_mk_is_priv_apk () {
+    local path="$1"
+    echo "$path" | grep -q 'priv-app'
+}
+
+
 mk_init () {
     local readonly vendor_dir="$1"
 
@@ -69,7 +75,7 @@ mk_init () {
     _mk_init_blobs_mk
 }
 
-mk_add_apk () {
+_mk_add_apk () {
     local readonly apk="$1"
     local readonly owner="$2"
     local readonly device="$3"
@@ -96,6 +102,48 @@ mk_add_apk () {
     } >> "$_MODULES_MK"
 
     _mk_add_module_depends "$apk_module"
+}
+
+_mk_add_priv_apk () {
+    local readonly apk="$1"
+    local readonly owner="$2"
+    local readonly device="$3"
+
+    local readonly apk_basename="$(basename "$apk")"
+    local readonly apk_module="${apk_basename%.*}"
+
+    [ -f "$_MODULES_MK" ] || _mk_init_module_mk
+
+    {
+        echo
+        echo "ifeq (\$(TARGET_DEVICE),$device)"
+        echo "include \$(CLEAR_VARS)"
+        echo "LOCAL_MODULE := $apk_module"
+        echo "LOCAL_MODULE_TAGS := optional"
+        echo "LOCAL_BUILT_MODULE_STEM := package.apk"
+        echo "LOCAL_MODULE_OWNER := $owner"
+        echo "LOCAL_MODULE_CLASS := APPS"
+        echo "LOCAL_SRC_FILES := $apk"
+        echo "LOCAL_CERTIFICATE := platform"
+        echo "LOCAL_PRIVILEGED_MODULE := true"
+        echo "LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)"
+        echo "include \$(BUILD_PREBUILT)"
+        echo "endif"
+    } >> "$_MODULES_MK"
+
+    _mk_add_module_depends "$apk_module"
+}
+
+mk_add_apk () {
+    local readonly apk="$1"
+    local readonly owner="$2"
+    local readonly device="$3"
+
+    if _mk_is_priv_apk "$apk" ; then
+        _mk_add_priv_apk "$apk" "$owner" "$device"
+    else
+        _mk_add_apk "$apk" "$owner" "$device"
+    fi
 }
 
 mk_add_jar () {
