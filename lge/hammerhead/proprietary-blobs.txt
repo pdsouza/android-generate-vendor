@@ -5,9 +5,15 @@
 system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk
 system/app/shutdownlistener/shutdownlistener.apk
 system/app/TimeService/TimeService.apk
+system/app/UpdateSetting/UpdateSetting.apk
+
+# priv-apps
+system/priv-app/OmaDmclient/OmaDmclient.apk
+system/priv-app/SprintHiddenMenu/SprintHiddenMenu.apk
 
 # libs
 system/framework/qcrilhook.jar
+system/framework/serviceitems.jar
 
 # -----------------------------------------------------------------------------
 # Blobs - based on device/lge/hammerhead/proprietary-blobs.txt
@@ -202,6 +208,9 @@ system/vendor/lib/libvss_nv_iface.so
 
 # -----------------------------------------------------------------------------
 # Missing blobs from nexus binaries
+
+# needed for serviceitems.jar
+system/etc/permissions/serviceitems.xml
 
 # needed for qseecomd
 system/lib/librpmb.so
