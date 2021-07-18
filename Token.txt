@@ -1,0 +1,132 @@
+// ==UserScript==
+// @name         Discord-Token-Fetcher
+// @namespace    http://tampermonkey.net/
+// @version      1.0.0
+// @description  This is an Extension which lets you Fetch your Token on Android!
+// @author       All-About-Discord
+// @match        https://discord.com/activ*
+// @match        https://discord.com/channel*
+// @grant        none
+// @run-at       document-start
+// ==/UserScript==
+
+//========================
+
+(function () {
+   'use strict';
+   if(!window.localStorage) {
+      Object.defineProperty(window, "localStorage", new(function () {
+         var aKeys = [],
+            oStorage = {};
+         Object.defineProperty(oStorage, "getItem", {
+            value: function (sKey) {
+               return this[sKey] ? this[sKey] : null;
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+         });
+         Object.defineProperty(oStorage, "key", {
+            value: function (nKeyId) {
+               return aKeys[nKeyId];
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+         });
+         Object.defineProperty(oStorage, "setItem", {
+            value: function (sKey, sValue) {
+               if(!sKey) {
+                  return;
+               }
+               document.cookie = escape(sKey) + "=" + escape(sValue) + "; expires=Tue, 19 Jan 2038 03:14:07 GMT; path=/";
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+         });
+         Object.defineProperty(oStorage, "length", {
+            get: function () {
+               return aKeys.length;
+            },
+            configurable: false,
+            enumerable: false
+         });
+         Object.defineProperty(oStorage, "removeItem", {
+            value: function (sKey) {
+               if(!sKey) {
+                  return;
+               }
+               document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+         });
+         Object.defineProperty(oStorage, "clear", {
+            value: function () {
+               if(!aKeys.length) {
+                  return;
+               }
+               for(var sKey in aKeys) {
+                  document.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+               }
+            },
+            writable: false,
+            configurable: false,
+            enumerable: false
+         });
+         this.get = function () {
+            var iThisIndx;
+            for(var sKey in oStorage) {
+               iThisIndx = aKeys.indexOf(sKey);
+               if(iThisIndx === -1) {
+                  oStorage.setItem(sKey, oStorage[sKey]);
+               } else {
+                  aKeys.splice(iThisIndx, 1);
+               }
+               delete oStorage[sKey];
+            }
+            for(aKeys; aKeys.length > 0; aKeys.splice(0, 1)) {
+               oStorage.removeItem(aKeys[0]);
+            }
+            for(var aCouple, iKey, nIdx = 0, aCouples = document.cookie.split(/\s*;\s*/); nIdx < aCouples.length; nIdx++) {
+               aCouple = aCouples[nIdx].split(/\s*=\s*/);
+               if(aCouple.length > 1) {
+                  oStorage[iKey = unescape(aCouple[0])] = unescape(aCouple[1]);
+                  aKeys.push(iKey);
+               }
+            }
+            return oStorage;
+         };
+         this.configurable = false;
+         this.enumerable = true;
+      })());
+   }
+
+//========================
+   var userToken = localStorage.getItem('token');
+   var warn = "Hold On! Allowing anyone for accessing your Token can lead to Several unwanted activites. It includes Unwanted Logins, Server Bans & Nukes and Impersonation Acts. Please Press continue only if you are 100% Sure of what you are doing. To Return, Please Press 'Cancel'."
+   document.addEventListener('readystatechange', event => {
+         if(event.target.readyState === "interactive") {} else if(event.target.readyState === "complete") {
+           setTimeout(function () {
+               if(confirm(warn)) {
+               prompt("Thank you for Watching our Video!\nYour Token has been Fetched Successfully!\n\nYour Token:", userToken)
+              }
+           }, 3000);
+        }
+     });
+
+//========================
+
+   document.addEventListener('paste', function (e) {
+      if(e.clipboardData.getData('text/plain') == userToken) {
+         e.clipboardData.setData('text/plain', 'do not post your token here');
+         e.preventDefault();
+         var pasteToken = new ClipboardEvent('paste');
+         pasteToken.clipboardData.items.add('do not post your token here', 'text/plain');
+         document.dispatchEvent(pasteToken);
+         e.clipboardData.setData('text/plain', userToken);
+      }
+   });
+})();
